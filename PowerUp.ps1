@@ -2,7 +2,7 @@
 
 PowerUp v1.0
 
-Various nethods to abuse local services to assist
+Various methods to abuse local services to assist
 with escalation on Windows systems.
 
 See README.md for more information.

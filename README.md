@@ -1,7 +1,7 @@
 #PowerUp
 
 PowerUp is a powershell tool to assist with local privilege escalation on 
-Windows systems. It contains serveral methods to identify and abuse
+Windows systems. It contains several methods to identify and abuse
 vulnerable services.
 
 PowerUp was developed by [@harmj0y](https://twitter.com/harmj0y).
