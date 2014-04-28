@@ -1,2 +1,13 @@
+[4.28.2014]
+    Released.: Version 1.1
+    Added....: Invoke-FindDLLHijack to find DLL hijacking opportunities
+    Added....: Invoke-FindPathDLLHijack to check %PATH% for hijackable service .DLLs
+    Added....: Get-UnattendedInstallFiles to reamining unattended installation files
+    Added....: Get-RegAlwaysInstallElevated to check for the AlwaysInstallElevated registry key
+    Added....: Write-UserAddMSI to produce a MSI installer that adds a user
+    Added....: Get-RegAutoLogon to check for the AlwaysInstallElevated registry key
+    Added....: Invoke-AllChecks to run all privesc checks and output a status report
+
+
 [4.23.2014]
     Released.: Version 1.0

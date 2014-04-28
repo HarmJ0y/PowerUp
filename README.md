@@ -2,7 +2,9 @@
 
 PowerUp is a powershell tool to assist with local privilege escalation on 
 Windows systems. It contains several methods to identify and abuse
-vulnerable services.
+vulnerable services, as well as DLL hijacking opportunities, vulnerable
+registry settings, and escalation opportunities.
+
 
 PowerUp was developed by [@harmj0y](https://twitter.com/harmj0y).
 
@@ -20,7 +22,23 @@ PowerUp was developed by [@harmj0y](https://twitter.com/harmj0y).
     Restore-ServiceEXE              -   restores a replaced service binary with the original executable
 
 
-## Misc. Helpers:
+## DLL Hijacking:
+    Invoke-FindDLLHijack            -   finds DLL hijacking opportunities for currently running processes
+    Invoke-FindPathDLLHijack        -   finds service %PATH% .DLL hijacking opportunities
+
+
+## Registry Checks:
+    Get-RegAlwaysInstallElevated    -   checks if the AlwaysInstallElevated registry key is set
+    Get-RegAutoLogon                -   checks for Autologon credentials in the registry
+
+
+## Misc. Checks:
+    Get-UnattendedInstallFiles      -   finds remaining unattended installation files
+
+
+## Helpers:
+    Invoke-AllChecks                -   runs all current escalation checks and returns a report
+    Write-UserAddMSI                -   write out a MSI installer that prompts for a user to be added
     Invoke-ServiceStart             -   starts a given service
     Invoke-ServiceStop              -   stops a given service
     Invoke-ServiceEnable            -   enables a given service
