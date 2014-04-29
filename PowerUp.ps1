@@ -1048,8 +1048,8 @@ function Get-RegAutoLogon {
     the registry values are found.
 
     .EXAMPLE
-    > Invoke-FindUnattended
-    Finds any remaining unattended installation files.
+    > Get-RegAutoLogon
+    Finds any autologon credentials left in the registry.
 
     .LINK
     https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/gather/credentials/windows_autologin.rb
@@ -1105,7 +1105,7 @@ function Get-UnattendedInstallFiles {
     System.Array. An array of any found file locations.
 
     .EXAMPLE
-    > Invoke-FindUnattended
+    > Get-UnattendedInstallFiles
     Finds any remaining unattended installation files.
 
     .LINK
