@@ -503,7 +503,7 @@ function Restore-ServiceEXE {
 
             $ServicePath = $TargetService.PathName
             
-            if ($BackupPath -eq $null or $BackupPath -eq ''){
+            if ($BackupPath -eq $null -or $BackupPath -eq ''){
                 $BackupPath = $ServicePath + ".bak"
             }
 
