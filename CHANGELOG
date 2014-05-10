@@ -1,3 +1,7 @@
+[5.10.2014]
+    Modified.: small bug fix in Restore-ServiceEXE
+
+
 [4.28.2014]
     Released.: Version 1.1
     Added....: Invoke-FindDLLHijack to find DLL hijacking opportunities
