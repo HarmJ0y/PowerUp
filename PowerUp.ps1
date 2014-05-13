@@ -956,20 +956,6 @@ function Invoke-FindPathDLLHijack {
                     $out.add('HijackablePath' ,$(Join-Path $Path "wlbsctrl.dll") )
                     $out
                 }
-                $service = gwmi win32_service -Filter "Name='ehRecvr'"
-                if ($service -and ($service.StartMode -eq "Auto")){
-                    $out = New-Object System.Collections.Specialized.OrderedDictionary
-                    $out.add('Service', 'ehRecvr')
-                    $out.add('HijackablePath' ,$(Join-Path $Path "ehETW.dll") )
-                    $out
-                }
-                $service = gwmi win32_service -Filter "Name='ehSched'"
-                if ($service -and ($service.StartMode -eq "Auto")){
-                    $out = New-Object System.Collections.Specialized.OrderedDictionary
-                    $out.add('Service', 'ehSched')
-                    $out.add('HijackablePath' ,$(Join-Path $Path "ehETW.dll") )
-                    $out
-                }
 
             }
             elseif($OS -match '2600') {
