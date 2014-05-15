@@ -1,3 +1,7 @@
+[5.15.2014]
+    Modofied.: bug fix in Invoke-AllChecks
+
+
 [5.13.2014]
     Modified.: Invoke-FindPathDLLHijack now checks if services are set to "Auto"
     Modified.: path bug fixes in Write-ServiceEXE and Restore-ServiceEXE

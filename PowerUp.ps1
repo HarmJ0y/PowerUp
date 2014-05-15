@@ -1187,8 +1187,8 @@ function Invoke-AllChecks {
 
     $StatusOutput += "`n`nChecking service permissions...`n"
     $VulnServices = Get-ServicePerms
-    if ($VulnService){
-        foreach ($Service in $VulnService){
+    if ($VulnServices){
+        foreach ($Services in $VulnServices){
             $StatusOutput += "[+] Vulnerable service: $($Service.ServiceName) - $($Service.Path)"
         }
     }
