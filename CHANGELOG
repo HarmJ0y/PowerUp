@@ -1,4 +1,8 @@
-[7.29.2014]
+[7.20.2014]
+    Modified.: Bug fix for Get-ServicePerms, better error handling in Get-ServiceUnquoted
+
+
+[7.19.2014]
     Modified.: Replaced Invoke-WmiMethod functionality with sc.exe functionality
     Modified.: better error handling
 

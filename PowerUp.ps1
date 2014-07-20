@@ -35,13 +35,15 @@ function Get-ServiceUnquoted {
     #>
 
     # find all paths to service .exe's that have a space in the path and aren't quoted
-    $VulnServices = gwmi win32_service | where {-not $_.pathname.StartsWith("`"")} | where {($_.pathname.Substring(0, $_.pathname.IndexOf(".exe") + 4)) -match ".* .*"}
+    $VulnServices = gwmi win32_service | where {$_.pathname.trim() -ne ""} | where {-not $_.pathname.StartsWith("`"")} | where {($_.pathname.Substring(0, $_.pathname.IndexOf(".exe") + 4)) -match ".* .*"}
     
-    foreach ($service in $VulnServices){
-        $out = New-Object System.Collections.Specialized.OrderedDictionary
-        $out.add('ServiceName', $service.name)
-        $out.add('Path', $service.pathname)
-        $out    
+    if ($VulnServices) {
+        foreach ($service in $VulnServices){
+            $out = New-Object System.Collections.Specialized.OrderedDictionary
+            $out.add('ServiceName', $service.name)
+            $out.add('Path', $service.pathname)
+            $out    
+        }
     }
 }
 
@@ -69,33 +71,35 @@ function Get-ServiceEXEPerms {
     # get all paths to service executables that aren't in C:\Windows\System32\*
     $services = gwmi win32_service | where {$_.pathname -notmatch ".*system32.*"} 
     
-    # try to open each for writing, print the name if successful
-    foreach ($service in $services){
-        try{
-            # strip out any arguments and get just the executable
-            $path = ($service.pathname.Substring(0, $service.pathname.IndexOf(".exe") + 4)).Replace("`"","")
+    if ($services) {
+        # try to open each for writing, print the name if successful
+        foreach ($service in $services){
+            try{
+                # strip out any arguments and get just the executable
+                $path = ($service.pathname.Substring(0, $service.pathname.IndexOf(".exe") + 4)).Replace("`"","")
 
-            if (Test-Path $path){
-                # try to open the file for writing, immediately closing it
-                $file = Get-Item $path -Force
-                $stream = $file.OpenWrite()
-                $stream.Close() | Out-Null
+                if (Test-Path $path){
+                    # try to open the file for writing, immediately closing it
+                    $file = Get-Item $path -Force
+                    $stream = $file.OpenWrite()
+                    $stream.Close() | Out-Null
 
-                $out = New-Object System.Collections.Specialized.OrderedDictionary
-                $out.add('ServiceName', $service.name)
-                $out.add('Path', $service.pathname)
-                $out    
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('ServiceName', $service.name)
+                    $out.add('Path', $service.pathname)
+                    $out    
+                }
             }
+            catch{
+                # if we have access but it's open by another process, return it
+                if (($_.ToString()).contains("by another process")){
+                    $out = New-Object System.Collections.Specialized.OrderedDictionary
+                    $out.add('ServiceName', $service.name)
+                    $out.add('Path', $service.pathname)
+                    $out
+                }
+            } 
         }
-        catch{
-            # if we have access but it's open by another process, return it
-            if (($_.ToString()).contains("by another process")){
-                $out = New-Object System.Collections.Specialized.OrderedDictionary
-                $out.add('ServiceName', $service.name)
-                $out.add('Path', $service.pathname)
-                $out
-            }
-        } 
     }
 }
 
@@ -121,21 +125,28 @@ function Get-ServicePerms {
 
 
     $services = gwmi win32_service
-        
-    foreach ($service in $services){
+    
+    if ($services) {
+        foreach ($service in $services){
 
-        # try to change the path of the service to its existing path name
-        $result = sc.exe config $($service.Name) binPath= $($service.PathName)
+            # try to change the path of the service to its existing path name
+            if ($service.PathName.StartsWith("`"") -and (-not $service.PathName.EndsWith("`""))){
+                # stupid weird string escaping case for '"path.exe" -arg' format
+                $result = sc.exe config $($service.Name) binPath= "`'$($service.PathName)`'"
+            }
+            else{
+                $result = sc.exe config $($service.Name) binPath= $($service.PathName)
+            }
 
-        # means the change was successful        
-        if ($result -notcontains "Access is denied."){
-            $out = New-Object System.Collections.Specialized.OrderedDictionary
-            $out.add('ServiceName', $service.name)
-            $out.add('Path', $service.pathname)
-            $out
+            # means the change was successful
+            if ($result -contains "[SC] ChangeServiceConfig SUCCESS"){
+                $out = New-Object System.Collections.Specialized.OrderedDictionary
+                $out.add('ServiceName', $service.name)
+                $out.add('Path', $service.pathname)
+                $out
+            }
         }
     }
-
 }
 
 
