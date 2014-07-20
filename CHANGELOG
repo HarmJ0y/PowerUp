@@ -1,9 +1,14 @@
+[7.29.2014]
+    Modified.: Replaced Invoke-WmiMethod functionality with sc.exe functionality
+    Modified.: better error handling
+
+
 [6.29.2014]
     Added...: PowerUp.psd1 module manifest
 
 
 [5.15.2014]
-    Modofied.: bug fix in Invoke-AllChecks
+    Modified.: bug fix in Invoke-AllChecks
 
 
 [5.13.2014]
