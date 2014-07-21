@@ -129,14 +129,8 @@ function Get-ServicePerms {
     if ($services) {
         foreach ($service in $services){
 
-            # try to change the path of the service to its existing path name
-            if ($service.PathName.StartsWith("`"") -and (-not $service.PathName.EndsWith("`""))){
-                # stupid weird string escaping case for '"path.exe" -arg' format
-                $result = sc.exe config $($service.Name) binPath= "`'$($service.PathName)`'"
-            }
-            else{
-                $result = sc.exe config $($service.Name) binPath= $($service.PathName)
-            }
+            # try to change error control of a service to its existing value
+            $result = sc.exe config $($service.Name) error= $($service.ErrorControl)
 
             # means the change was successful
             if ($result -contains "[SC] ChangeServiceConfig SUCCESS"){
