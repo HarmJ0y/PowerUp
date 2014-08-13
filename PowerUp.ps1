@@ -1224,28 +1224,28 @@ function Invoke-AllChecks {
 
     # Windows service checks
 
-    $StatusOutput += "`n`n[*]Checking for unquoted service paths...`n"
+    $StatusOutput += "`n`n[*] Checking for unquoted service paths..."
     $UnquotedServices = Get-ServiceUnquoted
     if ($UnquotedServices){
-        $StatusOutput += "[*] Use 'Write-UserAddServiceBinary' to abuse"
+        $StatusOutput += "[*] Use 'Write-UserAddServiceBinary' to abuse`n"
         foreach ($Service in $UnquotedServices){
             $StatusOutput += "[+] Unquoted service path: $($Service.ServiceName) - $($Service.Path)"
         }
     }
 
-    $StatusOutput += "`n`nChecking service executable permissions...`n"
+    $StatusOutput += "`n`n[*] Checking service executable permissions..."
     $ServiceEXEs = Get-ServiceEXEPerms
     if ($ServiceEXEs){
-        $StatusOutput += "[*] Use 'Write-ServiceEXE -ServiceName SVC' to abuse"
+        $StatusOutput += "[*] Use 'Write-ServiceEXE -ServiceName SVC' to abuse`n"
         foreach ($ServiceEXE in $ServiceEXEs){
             $StatusOutput += "[+] Vulnerable service executable: $($ServiceEXE.ServiceName) - $($ServiceEXE.Path)"
         }
     }
 
-    $StatusOutput += "`n`n[*] Checking service permissions...`n"
+    $StatusOutput += "`n`n[*] Checking service permissions..."
     $VulnServices = Get-ServicePerms
     if ($VulnServices){
-        $StatusOutput += "[*] Use 'Invoke-ServiceUserAdd' to abuse"
+        $StatusOutput += "[*] Use 'Invoke-ServiceUserAdd' to abuse`n"
         foreach ($Service in $VulnServices){
             $StatusOutput += "[+] Vulnerable service: $($Service.ServiceName) - $($Service.Path)"
         }
@@ -1254,16 +1254,16 @@ function Invoke-AllChecks {
 
     # other checks
 
-    $StatusOutput += "`n`n[*] Checking for unattended install files...`n"
+    $StatusOutput += "`n`n[*] Checking for unattended install files..."
     $InstallFiles = Get-UnattendedInstallFiles
     if ($InstallFiles){
-        $StatusOutput += "[*] Examine install files for possible passwords"
+        $StatusOutput += "[*] Examine install files for possible passwords`n"
         foreach ($File in $InstallFiles){
             $StatusOutput += "[+] Unattended install file: $File"
         }
     }
 
-    $StatusOutput += "`n`n[*] Checking %PATH% for potentially hijackable service .dll locations...`n"
+    $StatusOutput += "`n`n[*] Checking %PATH% for potentially hijackable service .dll locations..."
     $HijackablePaths = Invoke-FindPathDLLHijack
     if ($HijackablePaths){
         foreach ($Path in $HijackablePaths){
@@ -1271,9 +1271,9 @@ function Invoke-AllChecks {
         }
     }
 
-    $StatusOutput += "`n`n[*] Checking for AlwaysInstallElevated registry key...`n"
+    $StatusOutput += "`n`n[*] Checking for AlwaysInstallElevated registry key..."
     if (Get-RegAlwaysInstallElevated){
-        $StatusOutput += "[*] Use 'Write-UserAddMSI' to abuse"
+        $StatusOutput += "[*] Use 'Write-UserAddMSI' to abuse`n"
         $StatusOutput += "[+] AlwaysInstallElevated is enabled for this machine!"
     }
 
