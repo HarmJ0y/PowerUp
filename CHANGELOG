@@ -1,3 +1,6 @@
+[9.1.2014]
+    Added....: warning for when non-V2 powershell launched
+
 [8.13.2014]
     Modified.: added false positive filter for service .exe perms
     Modified.: more verbose status output for invoke-allchecks

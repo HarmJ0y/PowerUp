@@ -1296,3 +1296,10 @@ function Invoke-AllChecks {
     $StatusOutput
 }
 
+
+# throw up a warning if not launched with PowerShell version 2
+if ( (get-host).Version.Major -ne "2" )
+{
+    Write-Warning "[!] PowerUp is written for PowerShell version 2.0"
+    Write-Warning "[!] For proper behavior, launch powershell.exe with the '-Version 2' flag"
+}
