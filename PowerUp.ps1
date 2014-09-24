@@ -369,7 +369,7 @@ function Write-UserAddServiceBinary {
     try {
         # write the binary array out to the specified path
         Set-Content -value $Binary -encoding byte -path $Path
-        "[*] Binary for service '$ServiceName' to create user '$UserName:$Password' written to '$Path'"
+        "[*] Binary for service '$ServiceName' to create user '$UserName : $Password' written to '$Path'"
     }
     catch {
         Write-Warning "Error while writing to location '$Path': $_"
