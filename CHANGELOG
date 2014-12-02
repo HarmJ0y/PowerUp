@@ -1,3 +1,6 @@
+[12.1.2014]
+    Modified.: check to ensure services exist when enumerating
+
 [9.1.2014]
     Added....: warning for when non-V2 powershell launched
 

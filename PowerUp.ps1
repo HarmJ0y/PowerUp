@@ -37,7 +37,7 @@ function Get-ServiceUnquoted {
     #>
 
     # find all paths to service .exe's that have a space in the path and aren't quoted
-    $VulnServices = gwmi win32_service | where {$_.pathname.trim() -ne ""} | where {-not $_.pathname.StartsWith("`"")} | where {($_.pathname.Substring(0, $_.pathname.IndexOf(".exe") + 4)) -match ".* .*"}
+    $VulnServices = gwmi win32_service | ?{$_} | where {$_.pathname.trim() -ne ""} | where {-not $_.pathname.StartsWith("`"")} | where {($_.pathname.Substring(0, $_.pathname.IndexOf(".exe") + 4)) -match ".* .*"}
     
     if ($VulnServices) {
         foreach ($service in $VulnServices){
@@ -71,7 +71,7 @@ function Get-ServiceEXEPerms {
     #> 
     
     # get all paths to service executables that aren't in C:\Windows\System32\*
-    $services = gwmi win32_service | where {$_.pathname -notmatch ".*system32.*"} 
+    $services = gwmi win32_service | ?{$_} | where {$_.pathname -notmatch ".*system32.*"} 
     
     if ($services) {
         # try to open each for writing, print the name if successful
@@ -127,7 +127,7 @@ function Get-ServicePerms {
     #> 
 
 
-    $services = gwmi win32_service
+    $services = gwmi win32_service | ?{$_}
     
     if ($services) {
         foreach ($service in $services){
@@ -193,7 +193,7 @@ function Invoke-ServiceUserAdd {
     )
 
     # query WMI for the service
-    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'"
+    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'" | ?{$_}
 
     # make sure we got a result back
     if ($TargetService){
@@ -460,7 +460,7 @@ function Write-ServiceEXE {
     )
 
     # query WMI for the service
-    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'"
+    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'" | ?{$_}
 
     # make sure we got a result back
     if ($TargetService){
@@ -519,7 +519,7 @@ function Restore-ServiceEXE {
     )
 
     # query WMI for the service
-    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'"
+    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'" | ?{$_}
 
     # make sure we got a result back
     if ($TargetService){
@@ -575,7 +575,7 @@ function Invoke-ServiceStart {
     )
 
     # query WMI for the service
-    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'"
+    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'" | ?{$_}
 
     # make sure we got a result back
     if ($TargetService){
@@ -639,7 +639,7 @@ function Invoke-ServiceStop {
     )
 
     # query WMI for the service
-    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'"
+    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'" | ?{$_}
 
     # make sure we got a result back
     if ($TargetService){
@@ -696,7 +696,7 @@ function Invoke-ServiceEnable {
     )
 
     # query WMI for the service
-    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'"
+    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'" | ?{$_}
 
     # make sure we got a result back
     if ($TargetService){
@@ -752,7 +752,7 @@ function Invoke-ServiceDisable {
     )
 
     # query WMI for the service
-    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'"
+    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'" | ?{$_}
 
     # make sure we got a result back
     if ($TargetService){
@@ -809,7 +809,7 @@ function Get-ServiceDetails {
     )
 
     # query WMI for the service
-    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'"
+    $TargetService = gwmi win32_service -Filter "Name='$ServiceName'" | ?{$_}
 
     # make sure we got a result back
     if ($TargetService){
@@ -889,7 +889,7 @@ function Invoke-FindDLLHijack {
 
     # get the owners for all processes
     $owners = @{}
-    gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user}
+    gwmi win32_process | ?{$_} |% {$owners[$_.handle] = $_.getowner().user}
 
 
     # iterate through all current processes that have a valid path
@@ -1001,7 +1001,7 @@ function Invoke-FindPathDLLHijack {
                 Write-Verbose "Windows 7 detected"
 
                 # check if the service are set to "auto"
-                $service = gwmi win32_service -Filter "Name='IKEEXT'"
+                $service = gwmi win32_service -Filter "Name='IKEEXT'" | ?{$_}
                 if ($service -and ($service.StartMode -eq "Auto")){
                     $out = New-Object System.Collections.Specialized.OrderedDictionary
                     $out.add('Service', 'IKEEXT')
@@ -1015,28 +1015,28 @@ function Invoke-FindPathDLLHijack {
                 Write-Verbose "Windows XP detected"
 
                 # check if the services are set to "auto"
-                $service = gwmi win32_service -Filter "Name='wuauserv'"
+                $service = gwmi win32_service -Filter "Name='wuauserv'" | ?{$_}
                 if ($service -and ($service.StartMode -eq "Auto")){
                     $out = New-Object System.Collections.Specialized.OrderedDictionary
                     $out.add('Service', 'wuauserv')
                     $out.add('HijackablePath' ,$(Join-Path $Path "ifsproxy.dll") )
                     $out
                 }
-                $service = gwmi win32_service -Filter "Name='RDSessMgr'"
+                $service = gwmi win32_service -Filter "Name='RDSessMgr'" | ?{$_}
                 if ($service -and ($service.StartMode -eq "Auto")){
                     $out = New-Object System.Collections.Specialized.OrderedDictionary
                     $out.add('Service', 'RDSessMgr')
                     $out.add('HijackablePath' ,$(Join-Path $Path "SalemHook.dll") )
                     $out
                 }
-                $service = gwmi win32_service -Filter "Name='RasMan'"
+                $service = gwmi win32_service -Filter "Name='RasMan'" | ?{$_}
                 if ($service -and ($service.StartMode -eq "Auto")){
                     $out = New-Object System.Collections.Specialized.OrderedDictionary
                     $out.add('Service', 'RasMan')
                     $out.add('HijackablePath' ,$(Join-Path $Path "ipbootp.dll") )
                     $out
                 }
-                $service = gwmi win32_service -Filter "Name='winmgmt'"
+                $service = gwmi win32_service -Filter "Name='winmgmt'" | ?{$_}
                 if ($service -and ($service.StartMode -eq "Auto")){
                     $out = New-Object System.Collections.Specialized.OrderedDictionary
                     $out.add('Service', 'winmgmt')
