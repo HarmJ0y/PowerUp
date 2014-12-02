@@ -37,7 +37,7 @@ function Get-ServiceUnquoted {
     #>
 
     # find all paths to service .exe's that have a space in the path and aren't quoted
-    $VulnServices = gwmi win32_service | ?{$_} | where {$_.pathname.trim() -ne ""} | where {-not $_.pathname.StartsWith("`"")} | where {($_.pathname.Substring(0, $_.pathname.IndexOf(".exe") + 4)) -match ".* .*"}
+    $VulnServices = gwmi win32_service | ?{$_} | where {($_.pathname -ne $null) -and ($_.pathname.trim() -ne "")} | where {-not $_.pathname.StartsWith("`"")} | where {($_.pathname.Substring(0, $_.pathname.IndexOf(".exe") + 4)) -match ".* .*"}
     
     if ($VulnServices) {
         foreach ($service in $VulnServices){
@@ -71,7 +71,7 @@ function Get-ServiceEXEPerms {
     #> 
     
     # get all paths to service executables that aren't in C:\Windows\System32\*
-    $services = gwmi win32_service | ?{$_} | where {$_.pathname -notmatch ".*system32.*"} 
+    $services = gwmi win32_service | ?{$_} | where {($_.pathname -ne $null) -and ($_.pathname -notmatch ".*system32.*")} 
     
     if ($services) {
         # try to open each for writing, print the name if successful
