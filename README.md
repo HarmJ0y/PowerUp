@@ -1,3 +1,11 @@
+#NOTE
+This version of PowerUp is now unsupported.
+
+Go to  https://github.com/Veil-Framework/PowerTools/PowerUp/ 
+for the most current version.
+
+
+
 #PowerUp
 
 PowerUp is a powershell tool to assist with local privilege escalation on 
